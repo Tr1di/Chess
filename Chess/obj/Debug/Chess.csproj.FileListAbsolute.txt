@@ -1,0 +1,12 @@
+U:\Projects\WF\Chess\Chess\bin\Debug\Chess.dll
+U:\Projects\WF\Chess\Chess\bin\Debug\Chess.pdb
+U:\Projects\WF\Chess\Chess\obj\Debug\Chess.csproj.AssemblyReference.cache
+U:\Projects\WF\Chess\Chess\obj\Debug\Chess.csproj.CoreCompileInputs.cache
+U:\Projects\WF\Chess\Chess\obj\Debug\Chess.dll
+U:\Projects\WF\Chess\Chess\obj\Debug\Chess.pdb
+D:\Projects\WF\Chess\Chess\bin\Debug\Chess.dll
+D:\Projects\WF\Chess\Chess\bin\Debug\Chess.pdb
+D:\Projects\WF\Chess\Chess\obj\Debug\Chess.csproj.AssemblyReference.cache
+D:\Projects\WF\Chess\Chess\obj\Debug\Chess.csproj.CoreCompileInputs.cache
+D:\Projects\WF\Chess\Chess\obj\Debug\Chess.dll
+D:\Projects\WF\Chess\Chess\obj\Debug\Chess.pdb
