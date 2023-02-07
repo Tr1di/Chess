@@ -16,6 +16,7 @@ namespace Chess.Pieces
     {
         Side Side { get; }
         Predicate<Point> MovePattern { get; }
+        //MoveSelector KillPattern { get; }
         MoveSelector MakeSelector();
     }
 }

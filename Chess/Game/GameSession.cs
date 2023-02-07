@@ -5,6 +5,7 @@ using System.Linq;
 using Chess.Desk;
 using Chess.Pieces;
 using Chess.Tasks;
+using Chess.Tasks.Check;
 
 namespace Chess.Game
 {
@@ -18,21 +19,25 @@ namespace Chess.Game
     public class GameSession
     {
         private Side _winner;
-
-        public event Action TurnBegun;
-        public event Action TurnEnded;
+        
+        public event Action OnTurnConfirmed;
+        public event Action OnGameOver;
 
         public IGameMode GameMode { get; }
         public Board Board { get; }
 
-        public Side CheckedSide = Side.None;
+        private Side _checkedSide = Side.None;
+        private Cell _checkedFrom;
         
-        public bool IsInCheck => CheckedSide != Side.None;
+        public bool IsInCheck => _checkedSide != Side.None;
         public GameState GameState { get; private set; }
         public bool IsOver => GameState == GameState.Over;
         public Side Turn { get; private set; }
+        private Side SwitchedTurn => Turn == Side.Black ? Side.White : Side.Black;
         public Side Winner => IsOver ? _winner : Side.None;
 
+        public bool CanCastle => GameMode.IsCastlingAllowed;
+        
         private List<Move> _moves;
         
         public GameSession(IGameMode gameMode)
@@ -44,7 +49,12 @@ namespace Chess.Game
                 .Confirm();
             
             _moves = new List<Move>();
+            
             Turn = Side.White;
+            
+            OnTurnConfirmed += CheckCheck;
+            OnTurnConfirmed += SwitchTurn;
+            OnTurnConfirmed += CheckGameOver;
         }
 
         public bool HasMoved(IPiece piece)
@@ -72,19 +82,30 @@ namespace Chess.Game
             
         }
 
-        public virtual void GameOver()
+        private void CheckGameOver()
         {
-            
+            if (GameMode.IsGameOver(this))
+            {
+                if (IsInCheck)
+                {
+                    _winner = SwitchedTurn;
+                    // OnGameOver
+                }
+            }
         }
 
         public void ConfirmMove(MoveExecutor executor)
         {
+            if (executor.From.Piece.Side != Turn) 
+                throw new ArgumentException($"Try move { executor.From.Piece.Side } { executor.From.Piece } at { Turn } turn!");
             
+            _moves.AddRange(executor.Execute());
+            OnTurnConfirmed?.Invoke();
         }
 
-        public bool CanCastling()
+        private void SwitchTurn()
         {
-            return false;
+            Turn = SwitchedTurn;
         }
 
         public bool CanEnPas()
@@ -94,7 +115,26 @@ namespace Chess.Game
         
         protected virtual void CheckCheck()
         {
+            var pieces = Board.FindAll<IPiece>().Result.ToList();
+            var kings = pieces.Where(x => x.Piece is King).ToList();
+
+            foreach (var king in kings)
+            {
+                foreach (var piece in pieces.Where(x => x.Piece.Side != king.Piece.Side))
+                {
+                    var canMove = new HasDirectMove(piece.Piece, king.Location);
+                    Board.Accept(canMove);
+                    if (canMove.Result)
+                    {
+                        _checkedSide = king.Piece.Side;
+                        _checkedFrom = piece;
+                        return;
+                    }
+                }
+            }
             
+            _checkedSide = Side.None;
+            _checkedFrom = null;
         }
     }
 }

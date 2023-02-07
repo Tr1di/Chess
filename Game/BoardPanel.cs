@@ -7,12 +7,12 @@ namespace Game
 {
     public partial class BoardPanel : FlowLayoutPanel
     {
-        private VisualStyle _style = VisualStyle.Default;
+        private Theme _style = Theme.Default;
         
         public Board Board { get; private set; }
         private int CellSize => Height / Board.Height;
         
-        public VisualStyle Style
+        public Theme Style
         {
             get => _style;
             set

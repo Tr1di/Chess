@@ -45,9 +45,9 @@ namespace Chess.Tasks.Movement
                 && WillProtectKing(cell.Location);
         }
 
-        protected virtual bool IsSatisfiesMovePattern(Point toward)
+        protected virtual bool IsSatisfiesMovePattern(Cell toward, Point relative)
         {
-            return Piece.MovePattern(toward);
+            return Piece.MovePattern(relative);
         }
 
         private IEnumerable<MoveExecutor> FilteredResult()
@@ -69,9 +69,9 @@ namespace Chess.Tasks.Movement
         public void Visit(Cell cell)
         {
             var toward = cell.Location.Relative(_from.Location);
-            if (Piece.Side == Side.White) toward = toward.Invert();
+            if (Piece.Side == Side.White && toward.X != 0) toward = toward.Invert();
             
-            if (IsSatisfiesMovePattern(toward))
+            if (IsSatisfiesMovePattern(cell, toward))
             {
                 _result.Add(CreateMoveExecutor(cell));
             }

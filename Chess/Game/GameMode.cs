@@ -1,4 +1,6 @@
-﻿using Chess.Desk;
+﻿using System.Linq;
+using Chess.Desk;
+using Chess.Pieces;
 using Chess.Player;
 
 namespace Chess.Game
@@ -26,7 +28,19 @@ namespace Chess.Game
         
         public bool IsGameOver(GameSession session)
         {
-            throw new System.NotImplementedException();
+            var pieces = session.Board.FindAll<IPiece>().Result.Select(x => x.Piece).Where(x => x.Side == session.Turn);
+
+            foreach (var piece in pieces)
+            {
+                var hasMoves = piece.MakeSelector();
+                session.Board.Accept(hasMoves);
+                if (hasMoves.Result.Any())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public bool GetWinner(GameSession session)

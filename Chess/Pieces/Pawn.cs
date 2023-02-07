@@ -22,6 +22,11 @@ namespace Chess.Pieces
         {
             return new PawnMoveSelector(this);
         }
+
+        public override string ToString()
+        {
+            return GetType().Name;
+        }
     }
     
     public class PawnFabric : IPieceFabric

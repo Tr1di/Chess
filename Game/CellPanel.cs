@@ -10,7 +10,7 @@ namespace Game
     {
         private readonly Cell _cell;
         private readonly BoardPanel _owner;
-        private VisualStyle Style => _owner.Style;
+        private Theme Style => _owner.Style;
         public Cell Cell => _cell;
 
         public Color IdleColor { get; set; }

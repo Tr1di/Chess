@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Windows.Forms;
 using Chess.Game;
 using Chess.Pieces;
 using Chess.Tasks;
@@ -13,7 +14,17 @@ namespace Chess.Desk
     {
         public static readonly Size DefaultSize = new Size(8, 8);
 
-        public GameSession GameSession { get; internal set; }
+        private GameSession _gameSession;
+        
+        public GameSession GameSession
+        {
+            get => _gameSession;
+            internal set
+            {
+                _gameSession = value;
+                _gameSession.OnTurnConfirmed += () => { ClearSelection(); OnUpdate?.Invoke(this); };
+            }
+        }
 
         public bool IsInCheck => GameSession.IsInCheck;
         
@@ -70,8 +81,16 @@ namespace Chess.Desk
             }
         }
 
+        private void ClearSelection()
+        {
+            _selected = null;
+            _allowedMoves?.Clear();
+        }
+        
         private void OnSelected(Cell cell)
         {
+            if (GameSession.IsOver) return;
+            
             if (cell == null)
             {
                 throw new ArgumentNullException();
@@ -81,15 +100,14 @@ namespace Chess.Desk
             {
                 if (AllowedMoves.Contains(cell))
                 {
-                    GameSession.ConfirmMove(_allowedMoves.Find(x=> x.Toward == cell));
+                    GameSession.ConfirmMove(_allowedMoves.Find(x => x.Toward == cell));
                     return;
                 }
             }
             
-            _selected = null;
-            _allowedMoves?.Clear();
+            ClearSelection();
             
-            if (cell.Piece != null)
+            if (cell.Piece?.Side == GameSession.Turn)
             {
                 var selector = cell.Piece?.MakeSelector();
                 Accept(selector);

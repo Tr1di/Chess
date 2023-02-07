@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using Chess.Pieces;
 using Game.Properties;
+using Newtonsoft.Json;
 
 namespace Game
 {
@@ -84,9 +86,9 @@ namespace Game
         }
     }
     
-    public class VisualStyle
+    public class Theme
     {
-        public static VisualStyle Default => new VisualStyle (new Dictionary<Type, PieceImage>
+        public static Theme Default => new Theme ("Default", new Dictionary<Type, PieceImage>
             {
                 { typeof(Pawn  ), PieceImage.Pawn   },
                 { typeof(Rook  ), PieceImage.Rook   },
@@ -97,16 +99,46 @@ namespace Game
             }, 
             SelectionColor.Default);
 
-        public static VisualStyle JekaStyle => throw new NotImplementedException();
-        public static VisualStyle HStyle => throw new NotImplementedException();
-
-        private readonly Dictionary<Type, PieceImage> _pieces;
-        private readonly SelectionColor _colors;
+        public static List<Theme> All;
+        
+        private string _name;
+        private Dictionary<Type, PieceImage> _pieces;
+        private SelectionColor _colors;
 
         public SelectionColor Colors => _colors;
 
-        public VisualStyle(Dictionary<Type, PieceImage> pieces, SelectionColor colors)
+        public string Name
         {
+            get => _name;
+            set => _name = value;
+        }
+
+        static Theme()
+        {
+            All = new List<Theme>();
+
+            try
+            {
+                var dir = Directory.GetCurrentDirectory();
+                var themes = Directory.GetFiles(dir + @"\Themes", "config.json",
+                    SearchOption.AllDirectories);
+
+                foreach (var theme in themes)
+                {
+                    All.AddRange(JsonConvert.DeserializeObject<List<Theme>>(
+                        new StreamReader(new FileStream(theme, FileMode.Open))
+                            .ReadToEnd()));
+                }
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+        
+        public Theme(string name, Dictionary<Type, PieceImage> pieces, SelectionColor colors)
+        {
+            _name = name;
             _pieces = pieces;
             _colors = colors;
         }
@@ -124,6 +156,11 @@ namespace Game
         public Image Get(Type piece, Side side)
         {
             return _pieces[piece].Get(side);
+        }
+
+        public override string ToString()
+        {
+            return _name;
         }
     }
 }

@@ -10,13 +10,12 @@ namespace Chess.Tasks.Movement
     public class KingMoveSelector : MoveSelector
     {
         private readonly King _king;
-        private bool _hasMoved;
+        private bool HasMoved => Board?.GameSession?.HasMoved(_king) ?? false;
         private List<Cell> _rooksToCastle;
         
         public KingMoveSelector(IPiece piece) : base(piece)
         {
             _king = piece as King ?? throw new ArgumentException();
-            _hasMoved = false;
             _rooksToCastle = new List<Cell>();
         }
 
@@ -28,12 +27,10 @@ namespace Chess.Tasks.Movement
 
         private bool CanCastle(Point point)
         {
-            if (_hasMoved) return false;
+            if (!Board.GameSession.CanCastle) return false;
+            if (HasMoved) return false;
             if (!_king.CastlePattern(point)) return false;
-            
-            // TODO: не уверен
-            point = _king.Side == Side.White ? point.Invert() : point;
-            
+
             return _rooksToCastle.Exists(rook =>
             {
                 var relativeNormalized = rook.Location.Relative(From.Location).Normalize();
@@ -41,20 +38,24 @@ namespace Chess.Tasks.Movement
             });
         }
         
-        protected override bool IsSatisfiesMovePattern(Point toward)
+        protected override bool IsSatisfiesMovePattern(Cell toward, Point relative)
         {
-            return _king.UsualMovePattern(toward) || CanCastle(toward);
+            return _king.UsualMovePattern(relative) || CanCastle(relative);
         }
 
         protected override MoveExecutor CreateMoveExecutor(Cell cell)
         {
-            return base.CreateMoveExecutor(cell); //new MoveExecutor(From, cell, );
+            var exec = base.CreateMoveExecutor(cell);
+            if (false)
+            {
+                // exec.AddSubmove(new MoveExecutor(From, cell, ));
+            }
+            return exec;
         }
         
         public override void Visit(Board board)
         {
             base.Visit(board);
-            _hasMoved = board.GameSession.HasMoved(_king);
             _rooksToCastle = Board.FindAll<Rook>().Result
                 .Where(x => x.Piece.Side == _king.Side)
                 .Where(x => !Board.GameSession.HasMoved(x.Piece))

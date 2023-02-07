@@ -16,6 +16,11 @@ namespace Chess.Pieces
         {
             return new MoveSelector(this);
         }
+        
+        public override string ToString()
+        {
+            return GetType().Name;
+        }
     }
     
     public class QueenFabric : IPieceFabric
