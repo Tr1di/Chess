@@ -6,18 +6,16 @@ namespace Chess.Pieces
 {
     public class Rook : IPiece
     {
+        public Predicate<Point> MovePattern => direction => direction.X == 0 || direction.Y == 0;
+        public Predicate<Point> KillPattern => MovePattern;
+
         public Side Side { get; internal set; }
 
-        public Predicate<Point> MovePattern => direction => direction.X == 0 || direction.Y == 0;
-        
-        public MoveSelector MakeSelector()
-        {
-            return new MoveSelector(this);
-        }
-        
+        public MoveSelector Selector => new MoveSelector(this, MovePattern);
+
         public override string ToString()
         {
-            return GetType().Name;
+            return $"{ Side } { GetType().Name }";
         }
     }
     

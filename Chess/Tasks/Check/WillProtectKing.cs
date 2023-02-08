@@ -41,9 +41,12 @@ namespace Chess.Tasks.Check
             if (!_result) return;
 
             if (cell.Piece == null) return;
-            if (cell.Piece?.Side == _side) return;
-            
-            var canMove = new HasDirectMove(cell.Piece, _king, 
+            if (cell.Piece.Side == _side) return;
+            if (cell.Location == _move) return;
+            if (cell.Location == _moveFrom) return;
+
+            var canMove = new HasDirectKillMove(cell.Piece, _king,
+                cell.Piece.KillPattern,
                 new List<Point>{ _move }, 
                 new List<Point>{ _moveFrom });
             _board.Accept(canMove);
@@ -52,8 +55,6 @@ namespace Chess.Tasks.Check
         }
 
         public void Accept(IBoardAction action)
-        {
-            throw new NotImplementedException();
-        }
+        {}
     }
 }

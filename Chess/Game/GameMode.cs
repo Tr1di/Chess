@@ -32,7 +32,7 @@ namespace Chess.Game
 
             foreach (var piece in pieces)
             {
-                var hasMoves = piece.MakeSelector();
+                var hasMoves = piece.Selector;
                 session.Board.Accept(hasMoves);
                 if (hasMoves.Result.Any())
                 {
@@ -41,11 +41,6 @@ namespace Chess.Game
             }
 
             return true;
-        }
-
-        public bool GetWinner(GameSession session)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

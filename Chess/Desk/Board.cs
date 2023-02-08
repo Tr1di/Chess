@@ -109,7 +109,7 @@ namespace Chess.Desk
             
             if (cell.Piece?.Side == GameSession.Turn)
             {
-                var selector = cell.Piece?.MakeSelector();
+                var selector = cell.Piece?.Selector;
                 Accept(selector);
                 _allowedMoves?.AddRange(selector?.Result ?? new List<MoveExecutor>());
                 if (_allowedMoves?.Count > 0) _selected = cell;

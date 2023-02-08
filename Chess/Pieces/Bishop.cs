@@ -6,18 +6,15 @@ namespace Chess.Pieces
 {
     public class Bishop : IPiece
     {
-        public Side Side { get; internal set; }
-
         public Predicate<Point> MovePattern => direction => Math.Abs(direction.X) == Math.Abs(direction.Y);
+        public Predicate<Point> KillPattern => MovePattern;
+        public Side Side { get; internal set; }
         
-        public MoveSelector MakeSelector()
-        {
-            return new MoveSelector(this);
-        }
-        
+        public MoveSelector Selector => new MoveSelector(this, MovePattern);
+
         public override string ToString()
         {
-            return GetType().Name;
+            return $"{ Side } { GetType().Name }";
         }
     }
     

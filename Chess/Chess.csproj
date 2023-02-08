@@ -58,6 +58,7 @@
     <Compile Include="Pieces\Rook.cs" />
     <Compile Include="Player\IPlayerController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\Check\HasDirectKillMove.cs" />
     <Compile Include="Tasks\Check\HasDirectMove.cs" />
     <Compile Include="Tasks\Check\WillProtectKing.cs" />
     <Compile Include="Tasks\IBoardAction.cs" />

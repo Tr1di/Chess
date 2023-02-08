@@ -7,19 +7,16 @@ namespace Chess.Pieces
     public class King : IPiece
     {
         public Side Side { get; internal set; }
-
-        public Predicate<Point> MovePattern => direction => UsualMovePattern(direction) || CastlePattern(direction);
-        public Predicate<Point> UsualMovePattern => direction => Math.Abs(direction.X) < 2 && Math.Abs(direction.Y) < 2;
-        public Predicate<Point> CastlePattern = direction => direction.X == 0 && Math.Abs(direction.Y) == 2;
-
-        public MoveSelector MakeSelector()
-        {
-            return new KingMoveSelector(this);
-        }
         
+        public Predicate<Point> MovePattern => direction => Math.Abs(direction.X) < 2 && Math.Abs(direction.Y) < 2;
+        public Predicate<Point> KillPattern => MovePattern;
+        public Predicate<Point> CastlePattern => direction => direction.X == 0 && Math.Abs(direction.Y) == 2;
+        
+        public MoveSelector Selector => new KingMoveSelector(this, MovePattern, CastlePattern);
+
         public override string ToString()
         {
-            return GetType().Name;
+            return $"{ Side } { GetType().Name }";
         }
         
     }

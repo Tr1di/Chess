@@ -97,7 +97,7 @@ namespace Chess.Game
         public void ConfirmMove(MoveExecutor executor)
         {
             if (executor.From.Piece.Side != Turn) 
-                throw new ArgumentException($"Try move { executor.From.Piece.Side } { executor.From.Piece } at { Turn } turn!");
+                throw new ArgumentException($"Try move { executor.From.Piece } at { Turn } turn!");
             
             _moves.AddRange(executor.Execute());
             OnTurnConfirmed?.Invoke();
@@ -122,8 +122,9 @@ namespace Chess.Game
             {
                 foreach (var piece in pieces.Where(x => x.Piece.Side != king.Piece.Side))
                 {
-                    var canMove = new HasDirectMove(piece.Piece, king.Location);
+                    var canMove = new HasDirectKillMove(piece.Piece, king.Location, piece.Piece.KillPattern);
                     Board.Accept(canMove);
+                    
                     if (canMove.Result)
                     {
                         _checkedSide = king.Piece.Side;

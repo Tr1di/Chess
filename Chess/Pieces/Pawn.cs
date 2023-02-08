@@ -6,26 +6,19 @@ namespace Chess.Pieces
 {
     public class Pawn : IPiece
     {
+
+        public Predicate<Point> MovePattern => direction => direction.X == 1 && direction.Y == 0;
+        public Predicate<Point> FirstMovePattern => direction => direction.X < 3 && direction.X > 0 && direction.Y == 0;
+        public Predicate<Point> KillPattern => direction => direction.X == 1 && Math.Abs(direction.Y) == 1;
+        private Predicate<Point> EnPassPattern => direction => direction.X < 2 && direction.X > 0 && Math.Abs(direction.Y) == 0;
+        
         public Side Side { get; internal set; }
 
-        public Predicate<Point> MovePattern => direction => UsualMovePattern(direction)
-                                                            || FirstMovePattern(direction)
-                                                            || KillPattern(direction)
-                                                            || EnPassPattern(direction);
-
-        public Predicate<Point> UsualMovePattern => direction => direction.X == 1 && direction.Y == 0;
-        public Predicate<Point> FirstMovePattern => direction => direction.X < 3 && direction.X > 0 && direction.Y == 0;
-        public Predicate<Point> KillPattern => direction => direction.X < 2 && direction.X > 0 && Math.Abs(direction.Y) == 1;
-        public Predicate<Point> EnPassPattern => direction => direction.X < 2 && direction.X > 0 && Math.Abs(direction.Y) == 0;
-        
-        public MoveSelector MakeSelector()
-        {
-            return new PawnMoveSelector(this);
-        }
+        public MoveSelector Selector => new PawnMoveSelector(this, MovePattern, KillPattern, FirstMovePattern);
 
         public override string ToString()
         {
-            return GetType().Name;
+            return $"{ Side } { GetType().Name }";
         }
     }
     

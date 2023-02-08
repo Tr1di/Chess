@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Chess.Desk;
@@ -11,23 +12,34 @@ namespace Chess.Tasks.Movement
     {
         private readonly List<MoveExecutor> _result;
         private Cell _from;
-        
+        private Predicate<Point> _movePattern;
+        private Predicate<Point> _killPattern;
+
         protected readonly IPiece Piece;
         protected Cell From => _from;
         protected Board Board;
 
         public IEnumerable<MoveExecutor> Result => FilteredResult();
 
-        public MoveSelector(IPiece piece)
+        public MoveSelector(IPiece piece, Predicate<Point> movePattern, Predicate<Point> killPattern = null)
         {
             Piece = piece;
             _result = new List<MoveExecutor>();
+            _movePattern = movePattern;
+            _killPattern = killPattern ?? movePattern;
         }
 
         protected virtual bool HasDirectMove(Point toward)
         {
             var canMove = new HasDirectMove(Piece, toward);
             Accept(canMove);
+            return canMove.Result;
+        }
+
+        protected virtual bool HasDirectKillMove(Point toward)
+        {
+            var canMove = new HasDirectKillMove(Piece, toward, Piece.KillPattern);
+            Board.Accept(canMove);
             return canMove.Result;
         }
 
@@ -41,13 +53,13 @@ namespace Chess.Tasks.Movement
         protected virtual bool CanPerformMove(Cell cell)
         {
             if (cell.Piece?.Side == Piece.Side) return false;
-            return HasDirectMove(cell.Location)
+            return (cell.Piece == null ? HasDirectMove(cell.Location) : HasDirectKillMove(cell.Location))
                 && WillProtectKing(cell.Location);
         }
 
         protected virtual bool IsSatisfiesMovePattern(Cell toward, Point relative)
         {
-            return Piece.MovePattern(relative);
+            return _movePattern(relative) || (_killPattern(relative) && toward.Piece != null);
         }
 
         private IEnumerable<MoveExecutor> FilteredResult()

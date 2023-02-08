@@ -5,12 +5,6 @@ using Chess.Pieces;
 
 namespace Chess.Tasks.Check
 {
-    public struct PointsOverwrites
-    {
-        
-        
-    }
-    
     public class HasDirectMove : IBoardAction<bool>
     {
         private readonly IPiece _piece;
@@ -23,6 +17,8 @@ namespace Chess.Tasks.Check
         public List<Point> _ignoredCells;
         private Board _board;
 
+        public IPiece Piece => _piece;
+        public Point Toward => _toward;
         public bool Result { get; private set; }
 
         public HasDirectMove(IPiece piece, Point toward, List<Point> locked = null, List<Point> ignored = null)
@@ -39,7 +35,7 @@ namespace Chess.Tasks.Check
             _from = _board.Find(_piece).Location;
             _towardRelative = MakeRelative(_toward);
             _towardNormalized = _towardRelative.Normalize();
-            Result = _piece.MovePattern(_towardRelative);
+            Result = true;
         }
 
         public void Visit(Cell cell)
@@ -49,7 +45,6 @@ namespace Chess.Tasks.Check
             var relative = MakeRelative(cell.Location);
             
             if (!_towardNormalized.NearlyEquals(relative.Normalize())) return;
-            if (!_piece.MovePattern(relative)) return;
             if (_towardRelative.Length() < relative.Length()) return;
 
             var empty = cell.Piece == null;
