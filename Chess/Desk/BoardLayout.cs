@@ -13,10 +13,10 @@ namespace Chess.Desk
     {
         public void SetUp(Board board)
         {
-            SpawnPawns(board);
+            //SpawnPawns(board);
             SpawnRooks(board);
             //SpawnKnights(board);
-            //SpawnBishops(board);
+            SpawnBishops(board);
             //SpawnQueens(board);
             SpawnKings(board);
         }

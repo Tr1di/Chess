@@ -4,27 +4,36 @@ using System.Drawing;
 using System.Linq;
 using Chess.Desk;
 using Chess.Pieces;
+using Chess.Tasks.Check;
 
 namespace Chess.Tasks.Movement
 {
     public class KingMoveSelector : MoveSelector
     {
+        private static Func<MoveExecutor, MoveExecutor> IfCastleMove => executor =>
+        {
+            return executor;
+        };
+        
         private readonly King _king;
         private readonly Predicate<Point> _castlePattern;
         private bool HasMoved => Board?.GameSession?.HasMoved(_king) ?? false;
-        private List<Cell> _rooksToCastle;
-        
+        private List<Cell> RooksToCastle => Board.FindAll<Rook>().Result
+            .Where(x => x.Piece.Side == _king.Side)
+            .Where(x => !Board.GameSession.HasMoved(x.Piece))
+            .Where(x =>
+            {
+                var canMove = new HasDirectMove(x.Piece, From.Location, x.Location);
+                Board.Accept(canMove);
+                return canMove.Result;
+            })
+            .ToList();
+
         public KingMoveSelector(IPiece piece, Predicate<Point> movePattern, Predicate<Point> castlePattern) : base(piece, movePattern)
         {
             _king = piece as King ?? throw new ArgumentException();
-            _rooksToCastle = new List<Cell>();
             _castlePattern = castlePattern;
-        }
-
-        protected override bool CanPerformMove(Cell cell)
-        {
-            //TODO: Is safe on castle way
-            return base.CanPerformMove(cell);
+            ModifyExecutor(IfCastleMove);
         }
 
         private bool CanCastle(Point point)
@@ -38,12 +47,11 @@ namespace Chess.Tasks.Movement
             if (HasMoved) return null;
             if (!_castlePattern(point)) return null;
             
-            return _rooksToCastle.First(rook =>
-            {
-                if (Board.GameSession.HasMoved(rook.Piece)) return false;
-                var relativeNormalized = rook.Location.Relative(From.Location).Normalize();
-                return relativeNormalized.NearlyEquals(point.Normalize());
-            });
+            return RooksToCastle.FirstOrDefault(rook =>
+                {
+                    var relativeNormalized = rook.Location.Relative(From.Location).Normalize();
+                    return relativeNormalized.NearlyEquals(point.Normalize());
+                });
         }
         
         protected override bool IsSatisfiesMovePattern(Cell toward, Point relative)
@@ -54,25 +62,16 @@ namespace Chess.Tasks.Movement
         protected override MoveExecutor CreateMoveExecutor(Cell cell)
         {
             var exec = base.CreateMoveExecutor(cell);
+            
             var toward = cell.Location.Relative(From.Location);
-            toward = Piece.Side == Side.White ? toward.Invert() : toward;
+            toward = _king.Side == Side.White ? toward.Invert() : toward;
 
             var rook = GetRookForCastlingByDirection(toward);
             if (rook != null)
             {
-                
-                // exec.AddSubmove(new MoveExecutor(From, cell, ));
+                // exec.AddSubmove(new MoveExecutor(rook, cell, ));
             }
             return exec;
-        }
-        
-        public override void Visit(Board board)
-        {
-            base.Visit(board);
-            _rooksToCastle = Board.FindAll<Rook>().Result
-                .Where(x => x.Piece.Side == _king.Side)
-                .Where(x => !Board.GameSession.HasMoved(x.Piece))
-                .ToList();
         }
     }
 }

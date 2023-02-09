@@ -28,5 +28,10 @@ namespace Chess.Tasks
         {
             (to.Piece, from.Piece) = (from.Piece, to.Piece);
         }
+
+        public void Accept(IBoardAction action)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

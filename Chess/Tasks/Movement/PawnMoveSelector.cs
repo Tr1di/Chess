@@ -15,7 +15,7 @@ namespace Chess.Tasks.Movement
             Predicate<Point> movePattern, 
             Predicate<Point> killPattern = null, 
             Predicate<Point> firstMovePattern = null) 
-            : base(piece, movePattern, killPattern)
+            : base(piece, movePattern)
         {
             _pawn = piece as Pawn ?? throw new ArgumentException();
             _firstMovePattern = firstMovePattern;

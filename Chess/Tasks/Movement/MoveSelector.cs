@@ -10,89 +10,141 @@ namespace Chess.Tasks.Movement
 {
     public class MoveSelector : IBoardAction<IEnumerable<MoveExecutor>>
     {
-        private readonly List<MoveExecutor> _result;
+        private static Func<MoveSelector, Cell, bool> HasDirectMove => (selector, cell) =>
+        {
+            var canMove = new HasDirectMove(selector._piece, 
+                selector._from.Location, cell.Location, 
+                selector._locked, selector._ignored);
+            
+            selector.Accept(canMove);
+            return canMove.Result;
+        };
+
+        private static Func<MoveSelector, Cell, bool> CanKill => (selector, cell) =>
+        {
+            if (cell.Piece == null) return true;
+            if (cell.Piece.Side == selector._piece.Side) return false;
+            
+            var toward = selector.MakeRelativeToPiece(cell.Location);
+                
+            return cell.Piece.KillPattern(toward);
+        };
+        
+        private static Func<MoveSelector, Cell, bool> CanProtectKing => (selector, cell) =>
+        {
+            return !selector._board.FindAll<IPiece>()
+                .Result
+                .Where(x => x.Piece.Side != selector._piece.Side)
+                .ToList()
+                .Exists(piece =>
+                {
+                    var canMove = piece.Piece.Selector;
+                    canMove._filters.RemoveAll(x => x == CanProtectKing);
+
+                    canMove._locked.Add(cell.Location);
+                    canMove._ignored.Add(selector._from.Location);
+
+                    canMove.Filter((s, c) =>
+                    {
+                        if (c.Piece == null) return false;
+                        
+                        var toward = s.MakeRelativeToPiece(cell.Location);
+                
+                        return c.Piece.KillPattern(toward);
+                    });
+                    canMove.Filter((s, c) => c.Piece is King king && king.Side == selector._piece.Side);
+
+                    selector.Accept(canMove);
+                    return canMove.Result.Any();
+                });
+        };
+        
+        private readonly List<Point> _locked;
+        private readonly List<Point> _ignored;
+        
+        private readonly IPiece _piece;
+        private readonly Predicate<Point> _movePattern;
+        private readonly List<Func<MoveSelector, Cell, bool>> _filters;
+        private readonly List<Func<MoveExecutor, MoveExecutor>> _executorModifiers;
+        private readonly List<Cell> _result;
+        
+        private Board _board;
         private Cell _from;
-        private Predicate<Point> _movePattern;
-        private Predicate<Point> _killPattern;
+        
+        public Cell From => _from;
+        public Board Board => _board;
+        
+        public IEnumerable<MoveExecutor> Result => _result
+            .Where(cell => _filters.TrueForAll(pred => pred(this, cell)))
+            .Select(CreateMoveExecutor);
 
-        protected readonly IPiece Piece;
-        protected Cell From => _from;
-        protected Board Board;
-
-        public IEnumerable<MoveExecutor> Result => FilteredResult();
-
-        public MoveSelector(IPiece piece, Predicate<Point> movePattern, Predicate<Point> killPattern = null)
+        public MoveSelector(IPiece piece, Predicate<Point> movePattern)
         {
-            Piece = piece;
-            _result = new List<MoveExecutor>();
+            _piece = piece;
             _movePattern = movePattern;
-            _killPattern = killPattern ?? movePattern;
-        }
-
-        protected virtual bool HasDirectMove(Point toward)
-        {
-            var canMove = new HasDirectMove(Piece, toward);
-            Accept(canMove);
-            return canMove.Result;
-        }
-
-        protected virtual bool HasDirectKillMove(Point toward)
-        {
-            var canMove = new HasDirectKillMove(Piece, toward, Piece.KillPattern);
-            Board.Accept(canMove);
-            return canMove.Result;
-        }
-
-        protected virtual bool WillProtectKing(Point toward)
-        {
-            var canProtect = new WillProtectKing(Piece, toward);
-            Board.Accept(canProtect);
-            return canProtect.Result;
+            _result = new List<Cell>();
+            _filters = new List<Func<MoveSelector, Cell, bool>>();
+            _executorModifiers = new List<Func<MoveExecutor, MoveExecutor>>();
+            
+            _locked = new List<Point>();
+            _ignored = new List<Point>();
+            
+            Filter(HasDirectMove);
+            Filter(CanKill);
+            Filter(CanProtectKing);
         }
         
-        protected virtual bool CanPerformMove(Cell cell)
+        public void Visit(Board board)
         {
-            if (cell.Piece?.Side == Piece.Side) return false;
-            return (cell.Piece == null ? HasDirectMove(cell.Location) : HasDirectKillMove(cell.Location))
-                && WillProtectKing(cell.Location);
-        }
-
-        protected virtual bool IsSatisfiesMovePattern(Cell toward, Point relative)
-        {
-            return _movePattern(relative) || (_killPattern(relative) && toward.Piece != null);
-        }
-
-        private IEnumerable<MoveExecutor> FilteredResult()
-        {
-            return _result.FindAll(x => CanPerformMove(x.Toward));
+            _board = board;
+            _from = board.Find(_piece);
+            _result.Clear();
         }
 
         protected virtual MoveExecutor CreateMoveExecutor(Cell cell)
         {
-            return new MoveExecutor(_from, cell);
-        }
-        
-        public virtual void Visit(Board board)
-        {
-            Board = board;
-            _from = board.Find(Piece);
+            var exec = new MoveExecutor(_from, cell);
+            _executorModifiers.ForEach(x => exec = x(exec));
+            return exec;
         }
 
+        protected virtual bool IsSatisfiesMovePattern(Cell toward, Point relative)
+        {
+            return _movePattern(relative);
+        }
+        
         public void Visit(Cell cell)
         {
-            var toward = cell.Location.Relative(_from.Location);
-            if (Piece.Side == Side.White && toward.X != 0) toward = toward.Invert();
-            
+            var toward = MakeRelativeToPiece(cell.Location);
+
             if (IsSatisfiesMovePattern(cell, toward))
             {
-                _result.Add(CreateMoveExecutor(cell));
+                _result.Add(cell);
             }
         }
 
         public void Accept(IBoardAction action)
         {
-            action.Visit(Board);
-            _result.Select(x=> x.Toward).ToList().ForEach(cell => cell.Accept(action));
+            action.Visit(_board);
+            _result.ForEach(x => x.Accept(action));
+        }
+
+        public MoveSelector Filter(Func<MoveSelector, Cell, bool> filter)
+        {
+            _filters.Add(filter);
+            return this;
+        }
+
+        public MoveSelector ModifyExecutor(Func<MoveExecutor, MoveExecutor> modifier)
+        {
+            _executorModifiers.Add(modifier);
+            return this;
+        }
+
+        public Point MakeRelativeToPiece(Point direction)
+        {
+            direction = direction.Relative(_from.Location);
+            return _piece.Side == Side.White ? direction.Invert() : direction;
         }
     }
 }

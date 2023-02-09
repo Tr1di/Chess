@@ -52,9 +52,9 @@ namespace Chess.Game
             
             Turn = Side.White;
             
-            OnTurnConfirmed += CheckCheck;
+            //OnTurnConfirmed += CheckCheck;
             OnTurnConfirmed += SwitchTurn;
-            OnTurnConfirmed += CheckGameOver;
+            //OnTurnConfirmed += CheckGameOver;
         }
 
         public bool HasMoved(IPiece piece)

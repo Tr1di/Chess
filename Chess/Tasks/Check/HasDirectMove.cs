@@ -9,22 +9,30 @@ namespace Chess.Tasks.Check
     {
         private readonly IPiece _piece;
         private readonly Point _toward;
-        private Point _towardRelative;
-        private PointF _towardNormalized;
-        private Point _from;
+        
+        private readonly Point _from;
+        private readonly Point _towardRelative;
+        private readonly PointF _towardNormalized;
 
-        public List<Point> _lockedPoint;
-        public List<Point> _ignoredCells;
         private Board _board;
+        
+        private readonly List<Point> _lockedPoint;
+        private readonly List<Point> _ignoredCells;
 
         public IPiece Piece => _piece;
         public Point Toward => _toward;
+        
         public bool Result { get; private set; }
 
-        public HasDirectMove(IPiece piece, Point toward, List<Point> locked = null, List<Point> ignored = null)
+        public HasDirectMove(IPiece piece, Point from, Point toward, List<Point> locked = null, List<Point> ignored = null)
         {
             _piece = piece;
             _toward = toward;
+            
+            _from = from;
+            _towardRelative = MakeRelative(_toward);
+            _towardNormalized = _towardRelative.Normalize();
+            
             _lockedPoint = locked ?? new List<Point>();
             _ignoredCells = ignored ?? new List<Point>();
         }
@@ -32,9 +40,6 @@ namespace Chess.Tasks.Check
         public void Visit(Board board)
         {
             _board = board;
-            _from = _board.Find(_piece).Location;
-            _towardRelative = MakeRelative(_toward);
-            _towardNormalized = _towardRelative.Normalize();
             Result = true;
         }
 
@@ -58,7 +63,7 @@ namespace Chess.Tasks.Check
 
         public void Accept(IBoardAction action)
         {
-            throw new System.NotImplementedException();
+            action.Visit(_board);
         }
 
         private Point MakeRelative(Point direction)

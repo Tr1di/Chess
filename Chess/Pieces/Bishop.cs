@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using Chess.Tasks.Check;
 using Chess.Tasks.Movement;
 
 namespace Chess.Pieces
@@ -9,7 +10,7 @@ namespace Chess.Pieces
         public Predicate<Point> MovePattern => direction => Math.Abs(direction.X) == Math.Abs(direction.Y);
         public Predicate<Point> KillPattern => MovePattern;
         public Side Side { get; internal set; }
-        
+
         public MoveSelector Selector => new MoveSelector(this, MovePattern);
 
         public override string ToString()

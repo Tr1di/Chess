@@ -15,7 +15,7 @@ namespace Chess.Tasks.Check
 
         public HasDirectKillMove(IPiece piece, Point toward, Predicate<Point> killPattern, List<Point> locked = null, List<Point> ignored = null)
         {
-            _hasMove = new HasDirectMove(piece, toward, locked, ignored);
+            //_hasMove = new HasDirectMove(piece, toward, locked, ignored);
             _killPattern = killPattern;
             Result = false;
         }
